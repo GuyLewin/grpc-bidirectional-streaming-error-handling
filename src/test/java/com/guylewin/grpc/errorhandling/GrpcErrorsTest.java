@@ -20,34 +20,35 @@ class GrpcErrorsTest {
   GrpcExampleClient grpcExampleClient;
   Thread clientThread;
 
+  // Every wait is limited to 10 seconds, in case the test is waiting on the wrong lock
+  int WAIT_MILLISECONDS = 10 * 1000;
+
   @BeforeEach
   void beforeEach() throws InterruptedException {
     grpcExampleServer = new GrpcExampleServer();
     serverThread = new Thread(grpcExampleServer);
     serverThread.start();
     synchronized (grpcExampleServer.readinessLock) {
-      grpcExampleServer.readinessLock.wait();
+      grpcExampleServer.readinessLock.wait(WAIT_MILLISECONDS);
     }
 
     grpcExampleClient = new GrpcExampleClient(grpcExampleServer.port);
     clientThread = new Thread(grpcExampleClient);
     clientThread.start();
     synchronized (grpcExampleClient.readinessLock) {
-      grpcExampleClient.readinessLock.wait();
+      grpcExampleClient.readinessLock.wait(WAIT_MILLISECONDS);
     }
 
     // Wait for incoming connection from client
     synchronized (grpcExampleServer.service.incomingConnectionLock) {
-      grpcExampleServer.service.incomingConnectionLock.wait();
+      grpcExampleServer.service.incomingConnectionLock.wait(WAIT_MILLISECONDS);
     }
   }
 
   @AfterEach
   void afterEach() {
     grpcExampleClient.shutdown();
-    clientThread.stop();
     grpcExampleServer.shutdown();
-    serverThread.stop();
   }
 
   @Test
@@ -57,7 +58,7 @@ class GrpcErrorsTest {
 
     // Expect onError to be called on the server request stream
     synchronized (grpcExampleServer.service.serverRequestStreamObserver.onErrorLock) {
-      grpcExampleServer.service.serverRequestStreamObserver.onErrorLock.wait();
+      grpcExampleServer.service.serverRequestStreamObserver.onErrorLock.wait(WAIT_MILLISECONDS);
     }
     Throwable serverError = grpcExampleServer.service.serverRequestStreamObserver.thrownErrorRef.get();
     assertSame(StatusRuntimeException.class, serverError.getClass());
@@ -82,7 +83,7 @@ class GrpcErrorsTest {
 
     // Expect onError to be called on the client response stream
     synchronized (grpcExampleClient.clientResponseStreamObserver.onErrorLock) {
-      grpcExampleClient.clientResponseStreamObserver.onErrorLock.wait();
+      grpcExampleClient.clientResponseStreamObserver.onErrorLock.wait(WAIT_MILLISECONDS);
     }
     Throwable clientError = grpcExampleClient.clientResponseStreamObserver.thrownErrorRef.get();
     assertSame(StatusRuntimeException.class, clientError.getClass());
@@ -102,7 +103,7 @@ class GrpcErrorsTest {
 
     // Wait for onError to be called on the server request stream
     synchronized (grpcExampleServer.service.serverRequestStreamObserver.onErrorLock) {
-      grpcExampleServer.service.serverRequestStreamObserver.onErrorLock.wait();
+      grpcExampleServer.service.serverRequestStreamObserver.onErrorLock.wait(WAIT_MILLISECONDS);
     }
 
     // IllegalStateException is thrown from client after error in client
@@ -118,7 +119,7 @@ class GrpcErrorsTest {
 
     // Wait for onError to be called on the server request stream
     synchronized (grpcExampleServer.service.serverRequestStreamObserver.onErrorLock) {
-      grpcExampleServer.service.serverRequestStreamObserver.onErrorLock.wait();
+      grpcExampleServer.service.serverRequestStreamObserver.onErrorLock.wait(WAIT_MILLISECONDS);
     }
 
     // IllegalStateException is thrown from client after error in client
@@ -132,7 +133,7 @@ class GrpcErrorsTest {
 
     // Wait for onError to be called on the server request stream
     synchronized (grpcExampleServer.service.serverRequestStreamObserver.onErrorLock) {
-      grpcExampleServer.service.serverRequestStreamObserver.onErrorLock.wait();
+      grpcExampleServer.service.serverRequestStreamObserver.onErrorLock.wait(WAIT_MILLISECONDS);
     }
 
     // StatusRuntimeException is thrown from server after error in client (only on onNext)
@@ -148,7 +149,7 @@ class GrpcErrorsTest {
 
     // Wait for onError to be called on the server request stream
     synchronized (grpcExampleServer.service.serverRequestStreamObserver.onErrorLock) {
-      grpcExampleServer.service.serverRequestStreamObserver.onErrorLock.wait();
+      grpcExampleServer.service.serverRequestStreamObserver.onErrorLock.wait(WAIT_MILLISECONDS);
     }
 
     // No exception is thrown from server after error in client (only on onCompleted)
@@ -162,7 +163,7 @@ class GrpcErrorsTest {
 
     // Wait for onError to be called on the client response stream
     synchronized (grpcExampleClient.clientResponseStreamObserver.onErrorLock) {
-      grpcExampleClient.clientResponseStreamObserver.onErrorLock.wait();
+      grpcExampleClient.clientResponseStreamObserver.onErrorLock.wait(WAIT_MILLISECONDS);
     }
 
     // No exception is thrown from client after error in server
@@ -178,7 +179,7 @@ class GrpcErrorsTest {
 
     // Wait for onError to be called on the client response stream
     synchronized (grpcExampleClient.clientResponseStreamObserver.onErrorLock) {
-      grpcExampleClient.clientResponseStreamObserver.onErrorLock.wait();
+      grpcExampleClient.clientResponseStreamObserver.onErrorLock.wait(WAIT_MILLISECONDS);
     }
 
     // No exception is thrown from client after error in server
@@ -192,7 +193,7 @@ class GrpcErrorsTest {
 
     // Wait for onError to be called on the client response stream
     synchronized (grpcExampleClient.clientResponseStreamObserver.onErrorLock) {
-      grpcExampleClient.clientResponseStreamObserver.onErrorLock.wait();
+      grpcExampleClient.clientResponseStreamObserver.onErrorLock.wait(WAIT_MILLISECONDS);
     }
 
     // IllegalStateException is thrown from server after error in server
@@ -208,7 +209,7 @@ class GrpcErrorsTest {
 
     // Wait for onError to be called on the client response stream
     synchronized (grpcExampleClient.clientResponseStreamObserver.onErrorLock) {
-      grpcExampleClient.clientResponseStreamObserver.onErrorLock.wait();
+      grpcExampleClient.clientResponseStreamObserver.onErrorLock.wait(WAIT_MILLISECONDS);
     }
 
     // IllegalStateException is thrown from server after error in server

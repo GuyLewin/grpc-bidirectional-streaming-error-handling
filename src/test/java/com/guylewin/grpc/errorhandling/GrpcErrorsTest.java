@@ -16,18 +16,22 @@ import org.junit.jupiter.api.Test;
 class GrpcErrorsTest {
 
   GrpcExampleServer grpcExampleServer;
+  Thread serverThread;
   GrpcExampleClient grpcExampleClient;
+  Thread clientThread;
 
   @BeforeEach
   void beforeEach() throws InterruptedException {
     grpcExampleServer = new GrpcExampleServer();
-    new Thread(grpcExampleServer).start();
+    serverThread = new Thread(grpcExampleServer);
+    serverThread.start();
     synchronized (grpcExampleServer.readinessLock) {
       grpcExampleServer.readinessLock.wait();
     }
 
     grpcExampleClient = new GrpcExampleClient(grpcExampleServer.port);
-    new Thread(grpcExampleClient).start();
+    clientThread = new Thread(grpcExampleClient);
+    clientThread.start();
     synchronized (grpcExampleClient.readinessLock) {
       grpcExampleClient.readinessLock.wait();
     }
@@ -41,7 +45,9 @@ class GrpcErrorsTest {
   @AfterEach
   void afterEach() {
     grpcExampleClient.shutdown();
+    clientThread.stop();
     grpcExampleServer.shutdown();
+    serverThread.stop();
   }
 
   @Test

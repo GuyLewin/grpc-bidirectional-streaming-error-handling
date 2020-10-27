@@ -11,10 +11,10 @@ import java.net.ServerSocket;
 public class GrpcExampleServer extends WaitableThread {
 
     public static String HOST = NetUtil.LOCALHOST.getHostName();
-    public int port = generateRandomPort();
+    public int port = randomAvailableTcpPort();
     public ExampleServiceGrpcImpl service = new ExampleServiceGrpcImpl();
 
-    private static int generateRandomPort() {
+    private static int randomAvailableTcpPort() {
         ServerSocket s = null;
         try {
             // ServerSocket(0) results in availability of a free random port
